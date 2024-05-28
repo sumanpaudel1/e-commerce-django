@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Page</title>
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <!-- FontAwesome 5 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css">
+</head>
+<body>
+    <!-- Navbar top -->
+    <div class="navbar-top">
+        <div class="title">
+            <h1>{{ user.username }}'s Profile</h1>
+        </div>
+    <ul>
+        <li>
+            <a href="{% url 'logout_user' %}">
+                    <i class="fa fa-sign-out-alt fa-2x"></i>
+                </a>
+        </li>
+        <li>
+            <a href="{% url 'index' %}" title="Home">  <!-- Link to the index page -->
+                <i class="fas fa-home fa-2x"></i>  <!-- FontAwesome home icon -->
+            </a>
+        </li>
+    </ul>
+        <!-- End -->
+    </div>
+    <!-- End -->
+
+    <!-- Sidenav -->
+    <div class="sidenav">
+        <div class="profile">
+            {% if profile.profile_image %}
+            <img src="{{ profile.profile_image.url }}" alt="Profile Image" width="100" height="100">
+            {% else %}
+            <img src="/media/product/profile.png" alt="Default Profile Image" width="100" height="100">
+            {% endif %}
+
+
+            <div class="name">
+                {{ user.first_name }} {{ user.last_name }}
+            </div>
+        </div>
+
+        <div class="sidenav-url">
+            <div class="url">
+                <a href="#profile" class="active">Profile</a>
+                <hr align="center">
+            </div>
+        </div>
+    </div>
+    <!-- End -->
+
+    <!-- Main -->
+    <div class="main">
+        <h2>IDENTITY</h2>
+        <div class="card">
+            <div class="card-body">
+                <!-- Button to Trigger the Modal -->
+                <button type="button" class="btn btn-link" data-toggle="modal" data-target="#editProfileModal">
+                    <i class="fa fa-pen fa-xs"></i>  <!-- Icon for Edit -->
+                </button>
+
+
+
+<!-- Modal for Editing Profile -->
+                <div class="modal fade" id="editProfileModal" tabindex="-1" role="dialog" aria-labelledby="editProfileLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editProfileLabel">Edit Profile</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <!-- Form for Editing Profile -->
+                                <form method="POST" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    {{ user_form.as_p }}
+                                    {{ profile_form.as_p }}
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" id="saveChanges">Save Changes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <table>
+                    <tbody>
+                        <tr>
+                            <td> First Name</td>
+                            <td>:</td>
+                            <td>{{ user.first_name }}</td>
+                        </tr>
+                        <tr>
+                            <td> Last Name</td>
+                            <td>:</td>
+                            <td>{{ user.last_name }}</td>
+                        </tr>
+                        <tr>
+                            <td>Email</td>
+                            <td>:</td>
+                            <td>{{ user.email }}</td>
+                        </tr>
+                        <tr>
+                            <td>Address</td>
+                            <td>:</td>
+                            <td>naxal, Kathmandu</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </body>
+
+    <script>
+        document.getElementById('saveChanges').addEventListener('click', function() {
+            document.querySelector('.modal-body form').submit();
+        });
+        </script>
+       
+
+<!-- Button to Track Orders -->
+<button type="button" class="btn btn-primary" onclick="toggleOrderDetails()">Track My Orders</button>
+
+<!-- Template for tracking orders in a table format -->
+
+
+<table class="table table-striped" id="order-details" style="display: none;">
+    
+    <thead>
+        <h2>Track My Orders</h2>
+        <tr>
+            <th>Order ID</th>
+            <th>Status</th>
+            <th>Created At</th>
+            <th>Total Amount</th>
+            <th>Actions</th>  <!-- Column for cancel action -->
+        </tr>
+    </thead>
+    <tbody>
+        {% for order in orders %}
+        <tr>
+            <td>{{ order.id }}</td>
+            <td>{{ order.get_status_display }}</td>  <!-- Display the status text -->
+            <td>{{ order.created_at }}</td>
+            <td>{{ order.total_amount }}</td>
+
+            <td>
+                {% if order.status == 'Processing' and order.can_cancel %}
+                <!-- Show cancel button if order is within 2 hours and is Processing -->
+                <a href="{% url 'cancel_order' order.id %}" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this order?')">Cancel Order</a>
+                {% else %}
+                <!-- Display appropriate message or keep empty if no action -->
+                <span>No Action</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+
+
+
+
+
+<script>
+    function toggleOrderDetails() {
+        const orderSection = document.getElementById('order-details');  // Get the section by ID
+        
+        if (orderSection.style.display === 'none') {
+            orderSection.style.display = 'block';  // Show the section
+        } else {
+            orderSection.style.display = 'none';  // Hide the section
+        }
+    }
+    </script>
+    
+
+
+    <!-- End -->
+    <style>
+
+
+
+
+
+
+        /* Import Font Dancing Script */
+@import url(https://fonts.googleapis.com/css?family=Dancing+Script);
+
+* {
+    margin: 0;
+}
+
+body {
+    background-color: #e8f5ff;
+    font-family: Arial;
+    overflow: auto;  /* Allows scrolling */
+}
+
+
+
+/* NavbarTop */
+.navbar-top {
+    background-color: #fff;
+    color: #333;
+    box-shadow: 0px 4px 8px 0px grey;
+    height: 70px;
+}
+
+.title {
+    font-family: 'Dancing Script', cursive;
+    padding-top: 15px;
+    position: absolute;
+    left: 45%;
+}
+
+.navbar-top ul {
+    float: right;
+    list-style-type: none;
+    margin: 0;
+    overflow: hidden;
+    padding: 18px 50px 0 40px;
+}
+
+.navbar-top ul li {
+    float: left;
+}
+
+.navbar-top ul li a {
+    color: #333;
+    padding: 14px 16px;
+    text-align: center;
+    text-decoration: none;
+}
+
+.icon-count {
+    background-color: #ff0000;
+    color: #fff;
+    float: right;
+    font-size: 11px;
+    left: -25px;
+    padding: 2px;
+    position: relative;
+}
+
+/* End */
+
+/* Sidenav */
+.sidenav {
+    background-color: #fff;
+    color: #333;
+    border-bottom-right-radius: 25px;
+    height: 200%;
+    left: 0;
+    overflow-x: hidden;
+    padding-top: 20px;
+    position: absolute;
+    top: 70px;
+    width: 250px;
+}
+
+.profile {
+    margin-bottom: 20px;
+    margin-top: -12px;
+    text-align: center;
+}
+
+.profile img {
+    border-radius: 50%;
+    box-shadow: 0px 0px 5px 1px grey;
+}
+
+.name {
+    font-size: 20px;
+    font-weight: bold;
+    padding-top: 20px;
+}
+
+.job {
+    font-size: 16px;
+    font-weight: bold;
+    padding-top: 10px;
+}
+
+.url, hr {
+    text-align: center;
+}
+
+.url hr {
+    margin-left: 20%;
+    width: 60%;
+}
+
+.url a {
+    color: #818181;
+    display: block;
+    font-size: 20px;
+    margin: 10px 0;
+    padding: 6px 8px;
+    text-decoration: none;
+}
+
+.url a:hover, .url .active {
+    background-color: #e8f5ff;
+    border-radius: 28px;
+    color: #000;
+    margin-left: 14%;
+    width: 65%;
+}
+
+/* End */
+
+/* Main */
+.main {
+    margin-top: 2%;
+    margin-left: 29%;
+    font-size: 28px;
+    padding: 0 10px;
+    width: 58%;
+}
+
+.main h2 {
+    color: #333;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.main .card {
+    background-color: #fff;
+    border-radius: 18px;
+    box-shadow: 1px 1px 8px 0 grey;
+    height: auto;
+    margin-bottom: 20px;
+    padding: 20px 0 20px 50px;
+}
+
+.main .card table {
+    border: none;
+    font-size: 16px;
+    height: 270px;
+    width: 80%;
+}
+
+.edit {
+    position: absolute;
+    color: #e7e7e8;
+    right: 14%;
+}
+
+.social-media {
+    text-align: center;
+    width: 90%;
+}
+
+.social-media span {
+    margin: 0 10px;
+}
+
+.fa-facebook:hover {
+    color: #4267b3 !important;
+}
+
+.fa-twitter:hover {
+    color: #1da1f2 !important;
+}
+
+.fa-instagram:hover {
+    color: #ce2b94 !important;
+}
+
+.fa-invision:hover {
+    color: #f83263 !important;
+}
+
+.fa-github:hover {
+    color: #161414 !important;
+}
+
+.fa-whatsapp:hover {
+    color: #25d366 !important;
+}
+
+.fa-snapchat:hover {
+    color: #fffb01 !important;
+}
+
+.table {
+    width: 100%;  /* Full width */
+    border-collapse: collapse;  /* Ensure borders are collapsed */
+}
+
+.table th, .table td {
+    padding: 10px;  /* Add padding for spacing */
+    text-align: left;  /* Align text to the left */
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: #f9f9f9;  /* Stripe alternating rows for better readability */
+}
+
+
+/* End */
+    </style>
+</body>
+</html>

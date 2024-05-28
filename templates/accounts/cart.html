@@ -1,0 +1,344 @@
+{% extends 'base/base.html' %}
+
+{% block start %}
+<style>
+    .cart-page{
+        color: black;
+        margin: 80px auto;
+        width: 80%;
+    
+    }
+    table{
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .cart-info{
+        display: flex;
+        flex-wrap: wrap;
+    }
+    th{
+        text-align: left;
+        padding: 5px;
+        color: #fff;
+        background: #ff523b;
+    }
+    
+    td {
+        padding: 10px 5px;
+    }
+    td input{
+        width: 40px;
+        height: 30px;
+        padding: 5px;
+    }
+    td a{
+        color: #ff523b;
+        font-size: 12px;
+    }
+    td img{
+        width: 80px;
+        height: 80px;
+        margin-right: 10px;
+    }
+    .total-price{
+        display: flex;
+        justify-content: flex-end;
+    }
+    .total-price table{
+        border-top: 3px solid #ff523b;
+        width: 100%;
+        max-width: 400px;
+    }
+    td:last-child{
+        text-align: right;
+    }
+    th:last-child{
+        text-align: right;
+    }
+        .checkout-btn {
+            margin-left: 972px;
+            margin-top: 49px;
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: black;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: box-shadow 0.3s ease;
+        }
+    
+        .checkout-btn:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .cart-info p {
+            color: black;  // This sets the text color to black
+        }
+        
+        
+        
+        .apply-section input {
+            padding: 10px;  // Add padding for better usability
+            border: 1px solid #ccc;  // Basic border
+            border-radius: 4px;  // Smooth edges
+        }
+        
+        .apply-section button {
+            padding: 10px 20px;  // Padding for the button
+            background-color: #ff523b;  // Matching your color theme
+            color: white;  // White text for contrast
+            border: none;  // No border
+            border-radius: 4px;  // Rounded edges
+            cursor: pointer;  // Change cursor on hover
+        }
+        
+        .apply-section button:hover {
+            background-color: #ff7a6c;  // Slightly lighter on hover
+        }
+        .flex-container {
+            display: flex;
+            justify-content: space-between;  /* Aligns items with space in between */
+          }
+        
+          .cart-page {
+            flex: 3;  /* Occupies 3 parts of the flex space (60%) */
+            padding: 20px;
+            background-color: #f5f5f5;
+            /* This box-shadow creates a subtle shadow effect */
+            box-shadow: 2px 4px 6px rgba(0, 0, 0, 0.2);
+          }
+        
+          .apply-section {
+            flex: 2;  /* Occupies 2 parts of the flex space (40%) */
+            padding: 54px;
+            background-color: #f5f5f5;
+            /* This box-shadow creates a subtle shadow effect */
+            box-shadow: 2px 4px 6px rgba(0, 0, 0, 0.2);
+            margin-top: 82px;
+            margin-left: 24px;
+            margin-bottom: 78px;
+            
+          }
+          .btn-success {
+            background-color: green;  /* Green background for success */
+            color: white;  /* White text for contrast */
+            padding: 10px 20px;  /* Padding for the button */
+            text-align: center;  /* Centered text */
+            border: none;  /* No border */
+            border-radius: 5px;  /* Rounded corners */
+            text-decoration: none;  /* No underline on text */
+            display: inline-block;  /* Display as inline block */
+        }
+        
+        .btn-success:hover {
+            background-color: darkgreen;  /* Darker on hover */
+        }
+        .button {
+            background-color: green; /* Set the background color to green */
+            color: white; /* Set the text color to white */
+            border: none; /* Optional: remove the border */
+            padding: 10px 20px; /* Adjust padding for size and comfort */
+            text-align: center; /* Center the text */
+            text-decoration: none; /* Remove underline from links */
+            font-size: 16px; /* Set a suitable font size */
+            border-radius: 5px; /* Optional: add rounded corners */
+            cursor: pointer; /* Change cursor to pointer when hovering */
+        }
+        
+        .button:hover {
+            background-color: darkgreen; /* Optional: darken on hover for effect */
+        }
+        .modal {
+            display: none; /* Initially hidden */
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4); /* Background overlay */
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        /* Style for the Esewa form */
+        .esewa-form {
+            display: none; /* Initially hidden */
+        }
+
+        .esewa-form input {
+            display: none; /* Hide the form inputs but keep the data for form submission */
+        }
+        
+    
+</style>
+<html>
+<div class="flex-container">
+<div class="small-container cart-page">
+    <table> 
+        <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Subtotal</th>
+        </tr>
+
+        <!-- Loop through cart items -->
+        {% for cart_item in cart_items %}  <!-- Ensure the variable name matches -->
+        <tr>
+            <td>     
+                <div class="cart-info"> 
+                    <img src="/media/{{ cart_item.product.product_images.first.image }}">  <!-- Ensure product images exist -->
+                    <div> 
+                        <p>{{ cart_item.product.product_name }}</p>  <!-- Ensure product name is correct -->
+                        {% if cart_item.size_variant %}  <!-- Check for size variant -->
+                        <p>SIZE: {{ cart_item.size_variant.size_name }}</p>
+                        {% endif %}
+                        <br>
+                        <a href="{% url 'remove_cart' cart_item.uid %}">Remove</a> 
+                    </div>
+                </div>
+            </td>
+            <td><input type="number" value="1"></td>
+            <td>Rs {{ cart_item.get_product_price }}</td>  <!-- Ensure product price method works -->
+        </tr>
+        {% endfor %}  <!-- Ensure loop works and data exists -->
+    </table>
+
+    <div class="total-price">
+        <table> 
+            <tr>
+                <td>Total</td>
+                <td>Rs {{ cart_total }}</td>  <!-- Display total from the view -->
+            </tr>
+        </table>
+    </div>
+            <!-- Button to open the modal -->
+            <button onclick="showModal()" class="checkout-btn">Checkout</button>
+
+            <!-- The modal -->
+            <div id="checkoutModal" class="modal">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <!-- Close button for the modal -->
+                        <span class="close" onclick="closeModal()">&times;</span>
+        
+                        <!-- Checkout form and content -->
+                        <div class="modal-body">
+                            <h1 style="text-align: center; color: #333;">Checkout</h1>
+        
+                            <!-- Order Summary -->
+                            <div>
+                                <h2 style="color: #555;">Order Summary</h2>
+                                <ul style="list-style-type: none; padding: 10px;">
+                                    <!-- Loop through cart_items or order_items -->
+                                    {% for item in cart_items %}
+                                    <li style="border-bottom: 1px solid #ddd; padding: 10px;">
+                                        <span style="float: left;">{{ item.product.product_name }}</span>  <!-- Ensure this retrieves the correct product name with spaces -->
+                                        <span style="float: right;">{{ item.get_product_price }}</span>
+                                    </li>
+                                {% endfor %}
+                                    
+                                    <!-- Calculate and display the total -->
+                                    <li style="padding: 10px;">
+                                        <strong style="float: left;">Total</strong>
+                                        <strong style="float: right;">{{ cart_total }}</strong>  <!-- Display the total price -->
+                                    </li>
+                                </ul>
+                            </div>
+        
+                            <!-- Customer Information -->
+                            <div>
+                                <h2 style="color: #555; padding: 10px; ">Customer Information</h2>
+                                <form action="{% url 'checkout' %}" method="POST" id="checkout-form">
+                                    {% csrf_token %}
+                                    <!-- Full Name: Prefill with user's first and last name -->
+                                    <label for="name">Full Name:</label>
+                                    <input type="text" id="name" name="name" value="{{ user.first_name }} {{ user.last_name }}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
+                                
+                                    <!-- Email: Prefill with user's email -->
+                                    <label for="email">Email:</label>
+                                    <input type="email" id="email" name="email" value="{{ user.email }}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
+                                
+                                    <!-- Shipping Address: Prefill with user's address if available -->
+                                    <label for="address">Shipping Address:</label>
+                                    <textarea id="address" rows="3" name="address" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
+                                        {{ user.profile.address }}
+                                    </textarea>
+                                
+                                    <!-- Payment Information -->
+                                    <h2 style="color: #555; margin-top: 20px;">Payment Information</h2>
+                                    <label for="paymentMethod" style="display: block;">Payment Method:</label>
+                                    <select id="paymentMethod" name="paymentMethod" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
+                                        <option value="Cash">Cash on Delivery</option>
+                                    </select>
+                                
+                                    <!-- Complete Purchase Button -->
+                                    <button type="submit" class="btn btn-success" style="width: 100%; background-color: #4CAF50; color: white; padding: 10px; border: none; border-radius: 5px; margin-top: 20px;">
+                                        Complete Purchase
+                                    </button>
+                                </form>
+                                
+                        </div>
+                    </div>
+            </div>   
+    </div>
+    </div>
+</div>
+<div class="apply-section">
+    <form method="POST">
+        {% include "base/alert.html" %}
+        {% csrf_token %}
+        <h1> Havae coupne ?</h1>
+        <input type="text" id="coupon-code" name="coupon" placeholder="Coupon code" required>
+        <button type="submit">Apply</button>
+      <!-- Apply button -->
+    </form>
+    
+    {% if cart.coupon %}
+    <a href="{% url 'remove_coupon' cart.uid %}" class="button">{{cart.coupon.coupon_code}}</a>
+    {% endif %}
+</div>
+
+</html>
+<script>
+    // Function to open the modal
+    function showModal() {
+        document.getElementById("checkoutModal").style.display = "block";
+    }
+
+    // Function to close the modal
+    function closeModal() {
+        document.getElementById("checkoutModal").style.display = "none";
+    }
+
+    // Function to toggle payment method visibility
+
+</script>
+{% endblock %}

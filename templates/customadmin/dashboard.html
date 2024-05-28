@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet"> 
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="sidebar">
+    <h2><span class="admin-color">Admin</span> <span class="panel-color">Panel</span></h2>
+    <ul>
+        <li><a href="#" onclick="refreshPage()" class="active" id="dashboardLink"  ><i class="fas fa-home"></i> Dashboard</a></li>
+        <li><a href="#" id="usersLink"><i class="users"></i> Users</a></li>
+        <li><a href="#" id="sellersLink"><i class="link"></i> Sellers</a></li>
+        <li><a href="#" id="productsLink"><i class="tshirt"></i> Products</a></li>
+        <li><a href="#" id="teamsLink"><i class="users"></i>ADD Coupon</a></li> 
+        <br>
+        <br>
+        <br>
+        <li><a href="{% url 'admin_logout' %}"><i class="fas fa-link"></i>Logout</a></li>
+        
+        
+ </div>
+  <div class="container mt-4 ml-5" id="dashboardSection">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Total Sales</h5>
+            <p class="card-text">Rs.{{ total_sales }}</p>
+            <a href="#" class="btn btn-primary">Check Out</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Total Orders</h5>
+            <p class="card-text">{{ total_orders }}</p>
+            <a href="#" class="btn btn-primary">Check Out</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Total Products</h5>
+            <p class="card-text">{{ total_products }}</p>
+            <a href="#" class="btn btn-primary">Check Out</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mt-4">
+      <div class="col-md-12">
+        <h2>Recent Orders</h2>
+
+<!-- templates/customadmin/dashboard.html -->
+
+
+<table class="table">
+  <thead>
+      <tr>
+          <th>Order ID</th>
+          <th>Customer Name</th>
+          <th>Email</th>
+          <th>Order Date</th>
+          <th>Products</th>
+          <th>Total Amount</th>
+          <th>Status</th>
+          <th>Action</th>
+          <th>Delete</th>
+      </tr>
+  </thead>
+  <tbody>
+      {% for order in orders %}
+      <tr>
+          <th scope="row">{{ order.id }}</th>
+          <td>{{ order.name }}</td>
+          <td>{{ order.email }}</td>
+          <td>{{ order.created_at }}</td>
+
+          <td>
+              <!-- Display products in order -->
+              {% if order.items.all %}
+                  {% for item in order.items.all %}
+                      {{ item.product.product_name }} x {{ item.quantity }}<br>
+                  {% endfor %}
+              {% else %}
+                  No products
+              {% endif %}
+          </td>
+
+          <!-- Use total_price to get the total amount -->
+          <td>{{ order.total_price }}</td>
+
+          <td>
+              <!-- Form for changing status -->
+              <form method="post" action="{% url 'update_order_status' order.id %}">
+                  {% csrf_token %}
+                  <select name="status">
+                      {% for status in order_status_choices %}
+                          <option value="{{ status }}" {% if order.status == status %}selected{% endif %}>
+                              {{ status }}
+                          </option>
+                      {% endfor %}
+                  </select>
+          </td>
+          <td>
+              <button type="submit" class="btn btn-primary">Save</button>
+              </form>
+          </td>
+          <td>
+            <form method="post" action="{% url 'delete_order' order.id %}" style="display: inline;">
+                {% csrf_token %}  <!-- CSRF protection -->
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this order?');">
+                    Delete
+                </button>
+            </form>
+        </td>
+      </tr>
+      {% endfor %}
+  </tbody>
+</table>
+      </div>
+    </div>
+  </div>
+
+  <!-- User table, initially hidden -->
+  <div id="usersSection" style="display: none;">
+    <div class="container mt-4 ml-5">
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Recent Users</h2>
+
+          <table class="table">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Email</th>
+                    <th>Date Joined</th>
+                    <th>Last Login</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}  <!-- Loop through the users context variable -->
+                <tr>
+                    <td>{{ user.id }}</td>  <!-- User ID -->
+                    <td>{{ user.first_name }}</td>  <!-- First Name -->
+                    <td>{{ user.last_name }}</td>  <!-- Last Name -->
+                    <td>{{ user.email }}</td>  <!-- Email -->
+                    <td>{{ user.date_joined|date:"jS F, Y" }}</td>  <!-- Date Joined -->
+                    <td>
+                        {% if user.last_login %}
+                            {{ user.last_login|date:"jS F, Y H:i" }}  <!-- Last Login with time -->
+                        {% else %}
+                            Never
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Add and delete buttons for users, initially hidden -->
+  <div id="userButtons" style="display: none;">
+    <div class="container mt-4 ml-5">
+      <div class="row">
+      </div>
+    </div>
+    <div class="modal fade" id="addUserModal" tabindex="-1" role="dialog" aria-labelledby="addUserModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addUserModalLabel">Add User</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form id="addUserForm">
+              <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" class="form-control" id="name" required>
+              </div>
+              <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" class="form-control" id="email" required>
+              </div>
+              <div class="form-group">
+                <label for="phone">Phone Number:</label>
+                <input type="tel" class="form-control" id="phone" required>
+              </div>
+              <div class="form-group">
+                <label for="location">Location:</label>
+                <input type="text" class="form-control" id="location" required>
+              </div>
+              <div class="form-group">
+                <label for="dateJoined">Date of Joined:</label>
+                <input type="date" class="form-control" id="dateJoined" required>
+              </div>
+            </form>
+          </div>
+        </div>
+        </div>
+        </div>
+  </div>
+
+  <!-- Seller table, initially hidden -->
+  <div id="sellersSection" style="display: none;">
+    <div class="container mt-4 ml-5">
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Recent Sellers</h2>
+
+          <table class="table">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col">Seller ID</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Contact Number</th>
+                    <th scope="col">Date of Joined</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Loop through sellers and display data -->
+                {% for seller in sellers %}
+                <tr class="{% if seller.is_verified %}table-success{% else %}table-danger{% endif %}">
+                    <th scope="row">{{ seller.id }}</th>
+                    <td>{{ seller.name }}</td>
+                    <td>{{ seller.email }}</td>
+                    <td>{{ seller.phone }}</td>
+                    <td>{{ seller.date_joined|date:"jS F, Y" }}</td>
+                    <td>
+                        <form method="POST" class="verify-seller-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="seller_id" value="{{ seller.id }}">
+                            <!-- Replace the button with Delete button -->
+                            <button type="submit" class="btn btn-success verify-seller-btn" {% if seller.is_verified %}disabled{% endif %}>Verify</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Add and delete buttons for sellers, initially hidden -->
+  <div id="sellerButtons" style="display: none;">
+    <div class="container mt-4 ml-5">
+      <div class="row">
+        <div class="col-md-12">
+        </div>
+        
+        <div id="addSellerModal" class="modal" style="display: none;">
+          <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Add Seller</h2>
+            <form id="addSellerForm">
+              <div class="form-group">
+                <label for="sellerID">Seller ID:</label>
+                <input type="text" class="form-control" id="sellerID" required>
+              </div>
+              <div class="form-group">
+                <label for="sellerName">Name:</label>
+                <input type="text" class="form-control" id="sellerName" required>
+              </div>
+              <div class="form-group">
+                <label for="sellerEmail">Email:</label>
+                <input type="email" class="form-control" id="sellerEmail" required>
+              </div>
+              <div class="form-group">
+                <label for="sellerContact">Contact No:</label>
+                <input type="tel" class="form-control" id="sellerContact" required>
+              </div>
+              <button type="submit" class="btn btn-primary">Add Seller</button>
+            </form>
+          </div>
+        </div>
+        
+        
+        
+      </div>
+    </div>
+  </div>
+
+  <!-- Products table, initially hidden -->
+  <div id="productsSection" style="display: none;">
+    <div class="container mt-4 ml-5">
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Top Selling Products</h2>
+
+          <table class="table">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td>
+                        {% with product.product_images.first as product_image %}
+                            {% if product_image and product_image.image %}
+                                <img src="{{ product_image.image.url }}" alt="{{ product.product_name }}" style="height: 50px;" />
+                            {% else %}
+                                No image available
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                    <td>{{ product.product_name }}</td>
+                    <td>{{ product.product_description }}</td>
+                    <td>{{ product.price }}</td>
+                    <td>{{ product.stock }}</td>
+                    <td>
+                        <form method="post" action="{% url 'delete_product' product.product_name %}">
+                            {% csrf_token %}  <!-- Include CSRF token for security -->
+                            <button class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this product?')">Delete</button>  <!-- Confirmation prompt -->
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        
+
+            <!-- Sample data, replace with dynamic data -->
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Add and delete buttons for products, initially hidden -->
+  <div id="productButtons" style="display: none;">
+    <div class="container mt-4 ml-5">
+      <div class="row">
+        <div class="col-md-12">
+          <button class="btn btn-primary" id="addProductBtn" data-toggle="modal" data-target="#addProductModal">Add Product</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal for adding a product -->
+  <div class="modal fade" id="addProductModal" tabindex="-1" role="dialog" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addProductModalLabel">Add Product</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+
+          {% load static %} 
+          
+
+          <div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 bg-gray-200 shadow-md rounded-lg overflow-auto">
+            <form method="post" enctype="multipart/form-data" class="space-y-8 bg-gray-100 p-8 rounded-lg">
+                {% csrf_token %}
+                <div class="space-y-6">
+                    <h2 class="text-2xl font-bold leading-tight text-gray-900">Main Product Details</h2>
+                    {{ form.as_p }}
+                </div>
+    
+                <!-- Color variants -->
+                <div class="space-y-6">
+                    {{ color_formset.management_form }}
+                    <h3 class="text-xl font-semibold leading-tight text-gray-800">Color Variants</h3>
+                    <div id="color-section" class="space-y-4">
+                        {% for color_form in color_formset %}
+                            <div class="p-4 border border-gray-300 rounded-lg bg-gray-50">
+                                {{ color_form.as_p }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="mt-4 inline-flex items-center px-4 py-2 bg-black border border-transparent rounded-md font-semibold text-white hover:bg-gray-800 focus:outline-none" onclick="addColorVariant()">+ Add Color Variant</button>
+                </div>
+    
+                <!-- Size variants -->
+                <div class="space-y-6">
+                    {{ size_formset.management_form }}
+                    <h3 class="text-xl font-semibold leading-tight text-gray-800">Size Variants</h3>
+                    <div id="size-section" class="space-y-4">
+                        {% for size_form in size_formset %}
+                            <div class="p-4 border border-gray-300 rounded-lg bg-gray-50">
+                                {{ size_form.as_p }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="mt-4 inline-flex items-center px-4 py-2 bg-black border border-transparent rounded-md font-semibold text-white hover:bg-gray-800 focus:outline-none" onclick="addSizeVariant()">+ Add Size Variant</button>
+                </div>
+    
+                <!-- Product images -->
+                <div class="space-y-6">
+                    {{ image_formset.management_form }}
+                    <h3 class="text-xl font-semibold leading-tight text-gray-800">Product Images</h3>
+                    <div id="image-section" class="space-y-4">
+                        {% for image_form in image_formset %}
+                            <div class="p-4 border border-gray-300 rounded-lg bg-gray-50">
+                                {{ image_form.as_p }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="mt-4 inline-flex items-center px-4 py-2 bg-black border border-transparent rounded-md font-semibold text-white hover:bg-gray-800 focus:outline-none" onclick="addImage()">+ Add Product Image</button>
+                </div>
+    
+                <button type="submit" class="mt-8 w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">Add Product</button>
+            </form>
+        </div>
+        
+        <script>
+          // JavaScript to add color variants dynamically
+          // Function to add a new color variant
+          function addColorVariant() {
+            const colorSection = document.getElementById('color-section');
+            const colorFormsetTotal = document.querySelector('[name=color-TOTAL_FORMS]');
+            const currentForms = parseInt(colorFormsetTotal.value, 10);
+
+            if (currentForms < 5) {  // Limit to avoid excessive form addition
+                const newColorForm = document.createElement('div');
+                newColorForm.innerHTML = '{{ color_formset.empty_form.as_p|escapejs }}';  // Correct form rendering
+                colorFormsetTotal.value = currentForms + 1;  // Increment the total forms count
+                colorSection.appendChild(newColorForm);  // Add to the DOM
+            } else {
+                alert('Maximum 5 color variants allowed.');  // Ensure there's a limit
+            }
+          }
+
+          // Function to add a new size variant
+          function addSizeVariant() {
+            const sizeSection = document.getElementById('size-section');
+            const sizeFormsetTotal = document.querySelector('[name=size-TOTAL_FORMS]');
+            const currentForms = parseInt(sizeFormsetTotal.value, 10);
+
+            if (currentForms < 5) {  // Limit to avoid excessive form addition
+                const newSizeForm = document.createElement('div');
+                newSizeForm.innerHTML = '{{ size_formset.empty_form.as_p|escapejs }}';  // Correct form rendering
+                sizeFormsetTotal.value = currentForms + 1;  // Increment the total forms count
+                sizeSection.appendChild(newSizeForm);  // Add to the DOM
+            } else {
+                alert('Maximum 5 size variants allowed.');  // Ensure there's a limit
+            }
+          }
+
+          // Function to add a new product image
+          function addImage() {
+            const imageSection = document.getElementById('image-section');
+            const imageFormsetTotal = document.querySelector('[name=image-TOTAL_FORMS]');
+            const currentForms = parseInt(imageFormsetTotal.value, 10);
+
+            if (currentForms < 5) {  // Limit to avoid excessive form addition
+                const newImageForm = document.createlement('div');
+                newImageForm.innerHTML = '{{ image_formset.empty_form.as_p|escapejs }}';  // Correct form rendering
+                imageFormsetTotal.value = currentForms + 1;  // Increment the total forms count
+                imageSection.appendChild(newImageForm);  // Add to the DOM
+            } else {
+                alert('Maximum 5 images allowed.');  // Ensure there's a limit
+            }
+          }
+
+    // Get all forms with class "verify-seller-form"
+    document.addEventListener('DOMContentLoaded', function () {
+      // Get all forms with class "verify-seller-form"
+      const verifySellerForms = document.querySelectorAll('.verify-seller-form');
+  
+      verifySellerForms.forEach(form => {
+          // Find the corresponding button inside each form
+          const verifySellerBtn = form.querySelector('.verify-seller-btn');
+  
+          // Check if the button needs to be disabled
+          const isVerified = form.closest('tr').classList.contains('table-success');
+          if (isVerified) {
+              // If seller is verified, disable the button
+              verifySellerBtn.disabled = true;
+              verifySellerBtn.classList.add('disabled');
+          }
+  
+          // Add event listener to prevent form submission when the button is disabled
+          verifySellerBtn.addEventListener('click', function (event) {
+              if (verifySellerBtn.disabled) {
+                  event.preventDefault(); // Prevent form submission
+              }
+          });
+      });
+  });
+  
+
+        </script>               
+
+
+          
+          
+
+
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Teams section, initially hidden -->
+<div id="teamsSection" style="display: none;">
+  <div class="container mt-4 ml-5">
+    <!-- <h2 id="Ram">Our Teams</h2> -->
+    <div class="row">
+
+
+<!-- Display existing coupons -->
+<h3 class="s"></h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Coupon Code</th>
+            <th>Discount Price</th>
+            <th>Minimum Amount</th>
+            <th>Is Expired?</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for coupon in existing_coupons %}
+        <tr>
+            <td>{{ coupon.coupon_code }}</td>
+            <td>{{ coupon.discount_price }}</td>
+            <td>{{ coupon.minimum_amount }}</td>
+            <td>{{ coupon.is_expired }}</td>
+            <td>
+                <form method="POST" action="{% url 'delete_coupon' coupon.coupon_code %}">  <!-- Deletion form -->
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>  <!-- Delete button -->
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+      
+
+
+<h2 class="s"></h2>
+<!-- Button to trigger popup -->
+<button type="button" class="btn btn-primary suman" id="addCouponBtn">Add Coupon</button>
+
+<!-- Modal for the coupon form -->
+<div class="modal" id="couponModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h5 class="modal-title">Add Coupon</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <!-- Modal Body -->
+            <div class="modal-body">
+                <!-- Coupon Form -->
+                <form id="couponForm">
+                    {% csrf_token %}
+                    {{ coupon_form.as_p }}  <!-- Render the coupon form -->
+                    <button  method="POST" type="submit" class="btn btn-primary">Save</button>  <!-- Submit button -->
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Function to show the modal when the button is clicked
+    document.getElementById("addCouponBtn").addEventListener("click", function() {
+        var modal = new bootstrap.Modal(document.getElementById("couponModal"));
+        modal.show();
+    });
+
+    // Function to handle form submission via AJAX
+    document.getElementById("couponForm").addEventListener("submit", function(event) {
+        event.preventDefault();  // Prevent default form submission
+        var form = this;
+        var formData = new FormData(form);
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': "{{ csrf_token }}",
+            }
+        }).then(response => {
+            if (response.ok) {
+                // Close the modal if the form submission is successful
+                var modal = bootstrap.Modal.getInstance(document.getElementById("couponModal"));
+                modal.hide();
+                // Optionally, refresh the page or update coupon list
+            } else {
+                console.error('Error:', response);
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+        });
+    });
+</script>
+
+
+
+    </div>
+  </div>
+</div>
+
+
+<!-- Bootstrap JS and dependencies -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+  // JavaScript to toggle visibility of sections and buttons when links are clicked
+  document.getElementById("usersLink").addEventListener("click", function() {
+    toggleSections("users");
+  });
+
+  document.getElementById("sellersLink").addEventListener("click", function() {
+    toggleSections("sellers");
+  });
+
+  document.getElementById("productsLink").addEventListener("click", function() {
+    toggleSections("products");
+  });
+
+  document.getElementById("teamsLink").addEventListener("click", function() {
+    toggleSections("teams");
+  });
+
+  // Function to toggle visibility of sections and buttons
+  function toggleSections(section) {
+    document.getElementById("dashboardSection").style.display = (section === "dashboard") ? "block" : "none";
+    document.getElementById("usersSection").style.display = (section === "users") ? "block" : "none";
+    document.getElementById("userButtons").style.display = (section === "users") ? "block" : "none";
+    document.getElementById("sellersSection").style.display = (section === "sellers") ? "block" : "none";
+    document.getElementById("sellerButtons").style.display = (section === "sellers") ? "block" : "none";
+    document.getElementById("productsSection").style.display = (section === "products") ? "block" : "none";
+    document.getElementById("productButtons").style.display = (section === "products") ? "block" : "none";
+    document.getElementById("teamsSection").style.display = (section === "teams") ? "block" : "none";
+  }
+  // Add event listeners for delete buttons
+  document.querySelectorAll('.delete-user-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      const row = button.closest('tr');
+      const userId = row.querySelector('th').textContent;
+      // Send a request to delete user with userId and remove the row on success
+      // Example:
+      // fetch(`/deleteUser/${userId}`, {
+      //   method: 'DELETE'
+      // })
+      // .then(response => {
+      //   if (response.ok) {
+      //     row.remove();
+      //   } else {
+      //     // Handle error
+      //   }
+      // })
+      // .catch(error => console.error('Error:', error));
+      row.remove(); // For demonstration purpose, remove the row directly without actual deletion
+    });
+  });
+  // JavaScript to handle form submission in the modal
+document.getElementById("addUserForm").addEventListener("submit", function(event) {
+  event.preventDefault(); // Prevent the default form submission
+
+  // Get the input values
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+  const phone = document.getElementById("phone").value;
+  const location = document.getElementById("location").value;
+  const dateJoined = document.getElementById("dateJoined").value;
+
+  // Generate the new user ID based on the last user ID in the table
+  const tableBody = document.getElementById("userTableBody");
+  const lastRow = tableBody.rows[tableBody.rows.length - 1];
+  const lastUserId = parseInt(lastRow.cells[0].textContent);
+  const newUserId = lastUserId + 1;
+
+  // Create a new row with the input values
+  const newUserRow = document.createElement("tr");
+  newUserRow.innerHTML = `
+    <th scope="row">${newUserId}</th>
+    <td>${name}</td>
+    <td>${email}</td>
+    <td>${phone}</td>
+    <td>${dateJoined}</td>
+  `;
+  tableBody.appendChild(newUserRow);
+
+  // Close the modal
+  $('#addUserModal').modal('hide');
+
+  // Reset the form fields
+  document.getElementById("addUserForm").reset();
+});
+  // JavaScript to handle form submission in the modal
+  document.getElementById("addUserForm").addEventListener("submit", function(event) {
+    event.preventDefault(); // Prevent the default form submission
+
+    // Get the input values
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const phone = document.getElementById("phone").value;
+    const location = document.getElementById("location").value;
+    const dateJoined = document.getElementById("dateJoined").value;
+
+    // Generate the new user ID based on the last user ID in the table
+    const tableBody = document.getElementById("userTableBody");
+    const lastRow = tableBody.rows[tableBody.rows.length - 1];
+    const lastUserId = parseInt(lastRow.cells[0].textContent);
+    const newUserId = lastUserId + 1;
+
+    // Create a new row with the input values
+    const newUserRow = document.createElement("tr");
+    newUserRow.innerHTML = `
+      <th scope="row">${newUserId}</th>
+      <td>${name}</td>
+      <td>${email}</td>
+      <td>${phone}</td>
+      <td>${dateJoined}</td>
+    `;
+    tableBody.appendChild(newUserRow);
+
+    // Close the modal
+    $('#addUserModal').modal('hide');
+
+    // Reset the form fields
+    document.getElementById("addUserForm").reset();
+  });
+
+
+
+  function addImageField() {
+    var imageFieldsDiv = document.getElementById("imageFields");
+  
+    // Create a new input element for image
+    var imageField = document.createElement("div");
+    imageField.innerHTML = `
+      <div class="form-group">
+        <label for="productImage">Image:</label>
+        <input type="file" class="form-control" id="productImage" name="productImage[]" required>
+      </div>
+    `;
+  
+    // Append the new image input field to the imageFieldsDiv
+    imageFieldsDiv.appendChild(imageField);
+  }
+  
+
+
+
+// Function to open the modal
+function openModal() {
+  var modal = document.getElementById("addSellerModal");
+  modal.style.display = "block";
+}
+
+// Function to close the modal
+function closeModal() {
+  var modal = document.getElementById("addSellerModal");
+  modal.style.display = "none";
+}
+
+// Form submission handling
+var addSellerForm = document.getElementById("addSellerForm");
+addSellerForm.addEventListener("submit", function(event) {
+  event.preventDefault();
+  // Perform your form submission logic here
+  // For example, you can collect the form data and send it to the server
+  var sellerID = document.getElementById("sellerID").value;
+  var sellerName = document.getElementById("sellerName").value;
+  var sellerEmail = document.getElementById("sellerEmail").value;
+  var sellerContact = document.getElementById("sellerContact").value;
+  // Once you have the form data, you can process it accordingly
+  // For now, let's just close the modal
+  closeModal();
+});
+
+
+
+</script>  
+
+<script>
+  function refreshPage() {
+      window.location.reload(); // Reloads the entire page
+  }
+</script>
+<style>
+  /* Custom CSS for Admin Dashboard */
+
+  /* Sidebar */
+  .sidebar {
+    width: 250px;
+    background-color: #5412e3bd;
+    color: #fff;
+    padding: 20px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    transition: width 0.3s; 
+  }
+  
+  .sidebar h2 {
+    margin-bottom: 20px;
+  }
+  
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .sidebar ul li {
+    margin-bottom: 10px;
+  }
+  
+  .sidebar ul li a {
+    color: #fff;
+    text-decoration: none;
+    display: block;
+    padding: 10px;
+    transition: background-color 0.3s;
+  }
+  
+  .sidebar ul li a:hover {
+    background-color: #165aa2c6;
+  }
+  
+  /* Active link style */
+  .sidebar ul li a.active {
+    background-color: #007bff;
+  }
+  
+  /* Style the three boxes */
+  .card {
+    margin-bottom: 20px;
+  }
+  .card-title{
+    text-align: center;
+    color: rebeccapurple;
+    font-size: 30px; 
+    font-family: Arial, sans-serif; 
+  }
+  .card-text{
+    font-size: 20px; 
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    margin-left: 10px;
+  
+  }
+  /* Style table header */
+  .table thead th {
+    text-align: center;
+    background-color: rgb(7, 244, 188);
+  }
+  
+  /* Style table data */
+  .table tbody td {
+    vertical-align: middle;
+  }
+  
+  /* Responsive table */
+  @media (max-width: 767px) {
+    .table-responsive {
+      overflow-x: auto;
+    }
+  }
+  
+  /* Adjust table font size for smaller screens */
+  @media (max-width: 575px) {
+    .table td, .table th {
+      font-size: 12px;
+    }
+  }
+  .container mt-4 ml-5{
+    width: 100px;
+    text-align: center;
+    margin-left:35px;
+  
+  }
+  .row {
+    display: flex;
+      -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+      margin-right: -100px;
+      margin-left: 206px;
+  }
+  .card-img-top{
+    padding: 20px;
+    margin: 10px;
+  }
+  .ram{
+    position: center;
+  } 
+
+  .suman h1{
+    margin-top: 108px;
+    margin-left: 6px;
+    
+  }
+.table{
+  width: 88%;
+}
+.s{
+  margin-left: 45px;
+}
+
+
+</style>
+</body>
+</html>
